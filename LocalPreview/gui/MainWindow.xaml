@@ -1,0 +1,566 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Majsoul-modLauncher" Width="1260" Height="830" MinWidth="1040" MinHeight="690"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResizeWithGrip"
+        Background="{DynamicResource WindowBg}" FontFamily="Microsoft YaHei UI, Segoe UI" FontSize="13" UseLayoutRounding="True" SnapsToDevicePixels="True">
+ <Window.Resources>
+  <!-- Default Light Theme Palette ("light" · 绯樱白玉) - Updated dynamically by Shell.ApplyTheme -->
+  <SolidColorBrush x:Key="WindowBg" Color="#F5F3F7"/>
+  <SolidColorBrush x:Key="ShellBg" Color="#FAF8FB"/>
+  <SolidColorBrush x:Key="SidebarBg" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="TitleBarBg" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="CardHoverBg" Color="#FDF9FB"/>
+  <SolidColorBrush x:Key="CardSubtleBg" Color="#F3EEF5"/>
+  <SolidColorBrush x:Key="AvatarWellBg" Color="#ECE6F0"/>
+  <SolidColorBrush x:Key="BorderBrush" Color="#E8E0EA"/>
+  <SolidColorBrush x:Key="BorderStrongBrush" Color="#D9CEDC"/>
+  <SolidColorBrush x:Key="BorderAccentBrush" Color="#F094B0"/>
+  <SolidColorBrush x:Key="Ink" Color="#1E232E"/>
+  <SolidColorBrush x:Key="InkSecondary" Color="#505664"/>
+  <SolidColorBrush x:Key="Muted" Color="#888292"/>
+  <SolidColorBrush x:Key="Subtle" Color="#ABA3B4"/>
+  <SolidColorBrush x:Key="Accent" Color="#E65A86"/>
+  <SolidColorBrush x:Key="AccentHover" Color="#D44874"/>
+  <SolidColorBrush x:Key="AccentSoft" Color="#FFF0F5"/>
+  <SolidColorBrush x:Key="AccentBorder" Color="#F7C2D4"/>
+  <SolidColorBrush x:Key="Gold" Color="#C88832"/>
+  <SolidColorBrush x:Key="GoldSoft" Color="#FDF4E7"/>
+  <SolidColorBrush x:Key="Success" Color="#2D9A72"/>
+  <SolidColorBrush x:Key="SuccessSoft" Color="#EAF7F1"/>
+  <SolidColorBrush x:Key="Danger" Color="#D94C5A"/>
+  <SolidColorBrush x:Key="DangerSoft" Color="#FDEEEF"/>
+  <SolidColorBrush x:Key="DangerText" Color="#9E3345"/>
+  <SolidColorBrush x:Key="BadgeBg" Color="#EBFFFFFF"/>
+  <SolidColorBrush x:Key="SwitchOffBg" Color="#D8D2DC"/>
+  <SolidColorBrush x:Key="ScrollThumbBg" Color="#D5CDD9"/>
+  <SolidColorBrush x:Key="ScrollThumbHoverBg" Color="#B9AEBF"/>
+  <LinearGradientBrush x:Key="LaunchCardBg" StartPoint="0,0" EndPoint="1,1">
+   <GradientStop Color="#FFF8FA" Offset="0"/>
+   <GradientStop Color="#FFF0F5" Offset="1"/>
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,1">
+   <GradientStop Color="#EE6892" Offset="0"/>
+   <GradientStop Color="#DF4E7B" Offset="1"/>
+  </LinearGradientBrush>
+
+  <!-- Base Typography -->
+  <Style TargetType="TextBlock">
+   <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+  </Style>
+
+  <!-- Secondary / Soft Button -->
+  <Style TargetType="Button" x:Key="SoftButton">
+   <Setter Property="Background" Value="{DynamicResource CardBg}"/>
+   <Setter Property="Foreground" Value="{DynamicResource InkSecondary}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+   <Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="Padding" Value="15,8"/>
+   <Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="HorizontalContentAlignment" Value="Center"/>
+   <Setter Property="VerticalContentAlignment" Value="Center"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="Button">
+      <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="11" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+       <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderAccentBrush}"/>
+        <Setter TargetName="Border" Property="Background" Value="{DynamicResource CardHoverBg}"/>
+       </Trigger>
+       <Trigger Property="IsPressed" Value="True">
+        <Setter TargetName="Border" Property="Opacity" Value="0.78"/>
+       </Trigger>
+       <Trigger Property="IsEnabled" Value="False">
+        <Setter TargetName="Border" Property="Opacity" Value="0.42"/>
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style TargetType="Button" BasedOn="{StaticResource SoftButton}"/>
+
+  <!-- Primary CTA Button -->
+  <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource SoftButton}">
+   <Setter Property="Foreground" Value="White"/>
+   <Setter Property="FontWeight" Value="SemiBold"/>
+   <Setter Property="BorderThickness" Value="0"/>
+   <Setter Property="Background" Value="{DynamicResource PrimaryGradient}"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="Button">
+      <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+       <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="Border" Property="Opacity" Value="0.91"/>
+       </Trigger>
+       <Trigger Property="IsPressed" Value="True">
+        <Setter TargetName="Border" Property="Opacity" Value="0.76"/>
+       </Trigger>
+       <Trigger Property="IsEnabled" Value="False">
+        <Setter TargetName="Border" Property="Opacity" Value="0.45"/>
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+
+  <!-- Sidebar Navigation Button -->
+  <Style x:Key="Nav" TargetType="Button" BasedOn="{StaticResource SoftButton}">
+   <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+   <Setter Property="Background" Value="Transparent"/>
+   <Setter Property="BorderBrush" Value="Transparent"/>
+   <Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="Margin" Value="14,3"/>
+   <Setter Property="Padding" Value="14,12"/>
+   <Setter Property="FontWeight" Value="SemiBold"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="Button">
+      <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+       <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="Border" Property="Background" Value="{DynamicResource CardHoverBg}"/>
+       </Trigger>
+       <Trigger Property="IsPressed" Value="True">
+        <Setter TargetName="Border" Property="Opacity" Value="0.8"/>
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+
+  <!-- TitleBar Window Control Button -->
+  <Style x:Key="CaptionButton" TargetType="Button">
+   <Setter Property="Width" Value="36"/>
+   <Setter Property="Height" Value="28"/>
+   <Setter Property="Padding" Value="0"/>
+   <Setter Property="Margin" Value="2,0,0,0"/>
+   <Setter Property="Background" Value="Transparent"/>
+   <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+   <Setter Property="BorderThickness" Value="0"/>
+   <Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="Button">
+      <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="7">
+       <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="Border" Property="Background" Value="{DynamicResource CardSubtleBg}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+       </Trigger>
+       <Trigger Property="IsPressed" Value="True">
+        <Setter TargetName="Border" Property="Opacity" Value="0.72"/>
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+
+  <Style x:Key="CaptionCloseButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+   <Style.Triggers>
+    <Trigger Property="IsMouseOver" Value="True">
+     <Setter Property="Background" Value="#E64858"/>
+     <Setter Property="Foreground" Value="White"/>
+    </Trigger>
+   </Style.Triggers>
+  </Style>
+
+  <!-- TextBox -->
+  <Style TargetType="TextBox">
+   <Setter Property="BorderThickness" Value="0"/>
+   <Setter Property="Background" Value="Transparent"/>
+   <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+   <Setter Property="CaretBrush" Value="{DynamicResource Accent}"/>
+   <Setter Property="Padding" Value="10,8"/>
+   <Setter Property="VerticalContentAlignment" Value="Center"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="TextBox">
+      <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9" SnapsToDevicePixels="True">
+       <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+      </Border>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+
+  <!-- Themed ComboBox & ComboBoxItem for both Light and Dark modes -->
+  <Style TargetType="ComboBoxItem">
+   <Setter Property="Background" Value="Transparent"/>
+   <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+   <Setter Property="Padding" Value="11,8"/>
+   <Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="ComboBoxItem">
+      <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="7" Margin="3,1" Padding="{TemplateBinding Padding}">
+       <ContentPresenter VerticalAlignment="Center"/>
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsHighlighted" Value="True">
+        <Setter TargetName="Border" Property="Background" Value="{DynamicResource AccentSoft}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+       </Trigger>
+       <Trigger Property="IsSelected" Value="True">
+        <Setter TargetName="Border" Property="Background" Value="{DynamicResource AccentSoft}"/>
+        <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+
+  <Style TargetType="ComboBox">
+   <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
+   <Setter Property="Background" Value="{DynamicResource CardSubtleBg}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+   <Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="Padding" Value="12,8"/>
+   <Setter Property="MinHeight" Value="38"/>
+   <Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="ComboBox">
+      <Grid>
+       <ToggleButton x:Name="ToggleButton" ClickMode="Press" Focusable="False"
+                     IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                     Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+        <ToggleButton.Template>
+         <ControlTemplate TargetType="ToggleButton">
+          <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+           <Grid>
+            <Grid.ColumnDefinitions>
+             <ColumnDefinition Width="*"/>
+             <ColumnDefinition Width="30"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="1" Text="▾" Foreground="{DynamicResource Muted}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+           </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+           <Trigger Property="IsMouseOver" Value="True">
+            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderAccentBrush}"/>
+           </Trigger>
+          </ControlTemplate.Triggers>
+         </ControlTemplate>
+        </ToggleButton.Template>
+       </ToggleButton>
+       <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                         Content="{TemplateBinding SelectionBoxItem}"
+                         ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                         ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                         Margin="12,0,30,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+       <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+        <Border x:Name="DropDownBorder" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="10" Margin="0,4,0,0" Padding="4">
+         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+         </ScrollViewer>
+        </Border>
+       </Popup>
+      </Grid>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+
+  <!-- iOS-Style Toggle Switch -->
+  <Style x:Key="Switch" TargetType="CheckBox">
+   <Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="VerticalAlignment" Value="Center"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="CheckBox">
+      <Grid Width="46" Height="26">
+       <Border x:Name="Track" CornerRadius="13" Background="{DynamicResource SwitchOffBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+       <Ellipse x:Name="Dot" Fill="White" Width="20" Height="20" HorizontalAlignment="Left" Margin="3,0,0,0"/>
+      </Grid>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsChecked" Value="True">
+        <Setter TargetName="Track" Property="Background" Value="{DynamicResource Accent}"/>
+        <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+        <Setter TargetName="Dot" Property="HorizontalAlignment" Value="Right"/>
+        <Setter TargetName="Dot" Property="Margin" Value="0,0,3,0"/>
+       </Trigger>
+       <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="Opacity" Value="0.48"/>
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+
+  <!-- Minimal Rounded ScrollBar -->
+  <Style TargetType="ScrollBar">
+   <Setter Property="Width" Value="8"/>
+   <Setter Property="Background" Value="Transparent"/>
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="ScrollBar">
+      <Grid Width="8" Background="Transparent">
+       <Track x:Name="PART_Track" IsDirectionReversed="True">
+        <Track.Thumb>
+         <Thumb>
+          <Thumb.Template>
+           <ControlTemplate TargetType="Thumb">
+            <Border x:Name="ThumbBorder" Background="{DynamicResource ScrollThumbBg}" CornerRadius="4" Margin="1,2"/>
+            <ControlTemplate.Triggers>
+             <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="ThumbBorder" Property="Background" Value="{DynamicResource ScrollThumbHoverBg}"/>
+             </Trigger>
+            </ControlTemplate.Triggers>
+           </ControlTemplate>
+          </Thumb.Template>
+         </Thumb>
+        </Track.Thumb>
+       </Track>
+      </Grid>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style TargetType="ScrollViewer">
+   <Setter Property="PanningMode" Value="VerticalOnly"/>
+  </Style>
+ </Window.Resources>
+
+ <!-- Main Window Frame -->
+ <Border x:Name="RootBorder" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" CornerRadius="16" Background="{DynamicResource ShellBg}">
+  <Grid>
+   <Grid.RowDefinitions>
+    <RowDefinition Height="46"/>
+    <RowDefinition Height="*"/>
+   </Grid.RowDefinitions>
+   <Grid.ColumnDefinitions>
+    <ColumnDefinition Width="238"/>
+    <ColumnDefinition Width="*"/>
+   </Grid.ColumnDefinitions>
+
+   <!-- Custom Frameless TitleBar -->
+   <Border x:Name="TitleBar" Grid.ColumnSpan="2" Background="{DynamicResource TitleBarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" CornerRadius="16,16,0,0">
+    <Grid>
+     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+      <Border Width="22" Height="22" CornerRadius="6" Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource AccentBorder}" BorderThickness="1">
+       <TextBlock Text="雀" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      </Border>
+      <TextBlock Text="Majsoul-modLauncher" Foreground="{DynamicResource InkSecondary}" FontWeight="Bold" FontSize="11.5" Margin="10,0,0,0" VerticalAlignment="Center"/>
+      <Border CornerRadius="6" Background="{DynamicResource CardSubtleBg}" Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Center">
+       <TextBlock Text="v0.6.7" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Muted}"/>
+      </Border>
+     </StackPanel>
+
+     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
+      <!-- Instant Theme Scheme Switcher (浅色 / 深色) -->
+      <Border Background="{DynamicResource CardSubtleBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="3,2" Margin="0,0,12,0" VerticalAlignment="Center">
+       <StackPanel Orientation="Horizontal">
+        <Button x:Name="ThemeLightButton" Content="☀  浅色" Padding="10,4" BorderThickness="0" FontSize="11" FontWeight="SemiBold" ToolTip="切换至浅色方案（绯樱白玉）"/>
+        <Button x:Name="ThemeDarkButton" Content="☾  深色" Padding="10,4" BorderThickness="0" FontSize="11" FontWeight="SemiBold" Margin="2,0,0,0" ToolTip="切换至深色方案（玄夜鎏金）"/>
+       </StackPanel>
+      </Border>
+
+      <Button x:Name="MinButton" Style="{StaticResource CaptionButton}" Content="―" ToolTip="最小化"/>
+      <Button x:Name="MaxButton" Style="{StaticResource CaptionButton}" Content="□" ToolTip="最大化 / 还原"/>
+      <Button x:Name="CloseButton" Style="{StaticResource CaptionCloseButton}" Content="✕" ToolTip="关闭窗口"/>
+     </StackPanel>
+    </Grid>
+   </Border>
+
+   <!-- Left Sidebar -->
+   <Border Grid.Row="1" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" CornerRadius="0,0,0,16">
+    <Grid>
+     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+     </Grid.RowDefinitions>
+
+     <!-- Brand Header -->
+     <StackPanel Margin="22,22,20,16">
+      <StackPanel Orientation="Horizontal">
+       <Border Width="46" Height="50" CornerRadius="14" Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource AccentBorder}" BorderThickness="1">
+        <Grid>
+         <TextBlock Text="雀" FontSize="25" FontWeight="Bold" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+         <Ellipse Width="6" Height="6" Fill="{DynamicResource Gold}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,6,6"/>
+        </Grid>
+       </Border>
+       <StackPanel Margin="13,2,0,0" VerticalAlignment="Center">
+        <TextBlock Text="雀魂 Mod 启动器" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource Ink}"/>
+       </StackPanel>
+      </StackPanel>
+      <TextBlock Text="让喜欢的立绘装扮，在牌桌上先试试看。" FontSize="11" Foreground="{DynamicResource Muted}" Margin="2,14,0,0"/>
+     </StackPanel>
+
+     <!-- Navigation Items -->
+     <StackPanel Grid.Row="1">
+      <TextBlock Text="Mod 管理" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Subtle}" Margin="26,4,0,8"/>
+
+      <Button x:Name="NavCharacters" Style="{StaticResource Nav}">
+       <Grid>
+        <Grid.ColumnDefinitions>
+         <ColumnDefinition Width="4"/>
+         <ColumnDefinition Width="26"/>
+         <ColumnDefinition Width="*"/>
+         <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Border x:Name="NavCharactersBar" Width="3" Height="16" CornerRadius="1.5" Background="{DynamicResource Accent}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <TextBlock Grid.Column="1" Text="▦" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        <TextBlock Grid.Column="2" Text="角色一览" FontSize="13" VerticalAlignment="Center" Margin="4,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        <Border Grid.Column="3" CornerRadius="8" Background="{DynamicResource CardSubtleBg}" Padding="7,2" VerticalAlignment="Center">
+         <TextBlock x:Name="NavCharactersBadge" Text="125" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Muted}"/>
+        </Border>
+       </Grid>
+      </Button>
+
+      <Button x:Name="NavSettings" Style="{StaticResource Nav}">
+       <Grid>
+        <Grid.ColumnDefinitions>
+         <ColumnDefinition Width="4"/>
+         <ColumnDefinition Width="26"/>
+         <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border x:Name="NavSettingsBar" Width="3" Height="16" CornerRadius="1.5" Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <TextBlock Grid.Column="1" Text="⚙" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+        <TextBlock Grid.Column="2" Text="启动与外观设置" FontSize="13" VerticalAlignment="Center" Margin="4,0,0,0" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+       </Grid>
+      </Button>
+     </StackPanel>
+
+     <!-- Game Launch Dock Card -->
+     <Border Grid.Row="2" Background="{DynamicResource LaunchCardBg}" CornerRadius="16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="14,0,14,18" Padding="16,15,16,13">
+      <StackPanel>
+       <Grid>
+        <Grid.ColumnDefinitions>
+         <ColumnDefinition Width="*"/>
+         <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="启动雀魂" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource Ink}" VerticalAlignment="Center"/>
+        <Border CornerRadius="8" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="7,2" Grid.Column="1">
+         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Ellipse x:Name="GameStateDot" Width="6" Height="6" Fill="{DynamicResource Muted}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+          <TextBlock x:Name="GameState" Text="准备就绪" Foreground="{DynamicResource Muted}" FontSize="10" VerticalAlignment="Center" MaxWidth="112" TextTrimming="CharacterEllipsis"/>
+         </StackPanel>
+        </Border>
+       </Grid>
+
+       <Border Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="9" Padding="10,6" Margin="0,10,0,0">
+        <TextBlock x:Name="GamePathShort" Text="首次启动时选择游戏" Foreground="{DynamicResource InkSecondary}" FontSize="10.5" TextTrimming="CharacterEllipsis"/>
+       </Border>
+
+       <Button x:Name="LaunchButton" Style="{StaticResource Primary}" Content="↗  启动游戏" Margin="0,12,0,0" Height="46" FontSize="13.5"/>
+
+       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,11,0,0">
+        <Border CornerRadius="4" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="5,1">
+         <TextBlock Text="F10" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource InkSecondary}"/>
+        </Border>
+        <TextBlock Text="重载" FontSize="10" Foreground="{DynamicResource Muted}" Margin="4,0,10,0" VerticalAlignment="Center"/>
+        <Border CornerRadius="4" Background="{DynamicResource CardBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="5,1">
+         <TextBlock Text="F11" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource InkSecondary}"/>
+        </Border>
+        <TextBlock Text="恢复原图" FontSize="10" Foreground="{DynamicResource Muted}" Margin="4,0,0,0" VerticalAlignment="Center"/>
+       </StackPanel>
+      </StackPanel>
+     </Border>
+    </Grid>
+   </Border>
+
+   <!-- Main Workspace Content -->
+   <Grid Grid.Row="1" Grid.Column="1" Margin="30,22,24,16">
+    <Grid.RowDefinitions>
+     <RowDefinition Height="Auto"/>
+     <RowDefinition Height="Auto"/>
+     <RowDefinition Height="Auto"/>
+     <RowDefinition Height="*"/>
+     <RowDefinition Height="28"/>
+    </Grid.RowDefinitions>
+
+    <!-- Page Header -->
+    <Grid Margin="0,0,0,18">
+     <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="Auto"/>
+     </Grid.ColumnDefinitions>
+     <StackPanel>
+      <TextBlock x:Name="PageTitle" Text="角色一览" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource Ink}"/>
+      <TextBlock x:Name="PageSubtitle" Text="挑选一位雀士，为喜欢的皮肤换上新画面" Foreground="{DynamicResource Muted}" FontSize="12.5" Margin="0,6,0,0"/>
+     </StackPanel>
+     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+      <Button x:Name="ReloadButton" Content="↻  重载图片" Margin="0,0,9,0" FontSize="12" Padding="15,8" ToolTip="通知运行中的游戏重新读取全部配置和 PNG（等同 F10）"/>
+      <Button x:Name="RestoreButton" Content="恢复原图" FontSize="12" Padding="15,8" ToolTip="通知运行中的游戏暂时关闭自定义立绘并恢复原图（等同 F11）"/>
+     </StackPanel>
+    </Grid>
+
+    <!-- Search & Filter Bar -->
+    <Border x:Name="FilterBar" Grid.Row="1" Background="{DynamicResource CardBg}" CornerRadius="14" Margin="0,0,0,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="12,7">
+     <Grid>
+      <Grid.ColumnDefinitions>
+       <ColumnDefinition Width="*"/>
+       <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <Grid x:Name="SearchArea">
+       <TextBlock Text="⌕" Foreground="{DynamicResource Muted}" FontSize="15" VerticalAlignment="Center" Margin="10,0,0,0" IsHitTestVisible="False"/>
+       <TextBox x:Name="SearchBox" FontSize="12.5" Padding="30,6,30,6"/>
+       <TextBlock x:Name="SearchHint" Text="搜索角色名称或 ID…" Foreground="{DynamicResource Subtle}" IsHitTestVisible="False" Margin="32,0,0,0" VerticalAlignment="Center" FontSize="12.5"/>
+       <Button x:Name="SearchClearButton" Content="✕" Width="24" Height="24" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource Muted}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0" Visibility="Collapsed" ToolTip="清空搜索"/>
+      </Grid>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+       <TextBlock x:Name="FilterCountText" Text="" FontSize="11.5" Foreground="{DynamicResource Muted}" VerticalAlignment="Center" Margin="8,0,10,0"/>
+       <Border Background="{DynamicResource CardSubtleBg}" CornerRadius="10" Padding="3">
+        <StackPanel Orientation="Horizontal">
+         <Button x:Name="ShowAllButton" Content="全部角色" Padding="13,5" BorderThickness="0" FontSize="11.5" FontWeight="SemiBold"/>
+         <Button x:Name="ShowConfiguredButton" Content="已配置" Padding="13,5" BorderThickness="0" FontSize="11.5" FontWeight="SemiBold" Margin="3,0,0,0"/>
+        </StackPanel>
+       </Border>
+       <Border x:Name="BulkModControls" Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource AccentBorder}" BorderThickness="1" CornerRadius="10" Padding="2" Margin="12,0,0,0">
+        <StackPanel Orientation="Horizontal">
+         <Button x:Name="EnableAllModsButton" Content="全部启用 Mod" Padding="11,5" BorderThickness="0" FontSize="11.5" FontWeight="SemiBold" ToolTip="启用所有角色的 Mod。同一角色和皮肤有多个 Mod 时，优先保留已启用的一项。"/>
+         <Button x:Name="DisableAllModsButton" Content="全部关闭 Mod" Padding="11,5" BorderThickness="0" FontSize="11.5" FontWeight="SemiBold" Margin="3,0,0,0" ToolTip="停用所有角色的 Mod，并保存停用状态。"/>
+        </StackPanel>
+       </Border>
+      </StackPanel>
+     </Grid>
+    </Border>
+
+    <!-- Status & Launch Progress Banner -->
+    <Border x:Name="StatusBox" Grid.Row="2" Background="{DynamicResource AccentSoft}" BorderBrush="{DynamicResource AccentBorder}" BorderThickness="1" CornerRadius="12" Padding="15,10" Margin="0,0,0,14" Visibility="Collapsed">
+     <Grid>
+      <Grid.ColumnDefinitions>
+       <ColumnDefinition Width="*"/>
+       <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <StackPanel VerticalAlignment="Center">
+       <TextBlock x:Name="StatusText" TextWrapping="Wrap" Foreground="{DynamicResource Ink}" FontSize="12.5"/>
+       <ProgressBar x:Name="LaunchProgress" Height="5" Minimum="0" Maximum="100" Foreground="{DynamicResource Accent}" Background="{DynamicResource CardSubtleBg}" BorderThickness="0" Margin="0,9,5,0" Visibility="Collapsed"/>
+      </StackPanel>
+      <Button x:Name="KeepOpenButton" Content="保留窗口" Grid.Column="1" Margin="12,0,0,0" Padding="12,5" FontSize="11.5" Visibility="Collapsed"/>
+     </Grid>
+    </Border>
+
+    <!-- Scrollable Page Body -->
+    <ScrollViewer x:Name="PageScroll" Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <StackPanel x:Name="PageBody" Margin="1,0,8,0"/>
+    </ScrollViewer>
+
+    <!-- Footer Summary Bar -->
+    <Grid Grid.Row="4" VerticalAlignment="Bottom">
+     <TextBlock x:Name="Summary" Text="" FontSize="11" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+     <TextBlock x:Name="FooterThemeText" Text="浅色方案 · 绯樱白玉" FontSize="10.5" Foreground="{DynamicResource Muted}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+    </Grid>
+   </Grid>
+  </Grid>
+ </Border>
+</Window>

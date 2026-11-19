@@ -1,0 +1,29 @@
+[package]
+name = "majsoul-local-preview-native"
+version = "0.6.7"
+edition = "2021"
+
+[workspace]
+
+[features]
+launcher = []
+
+[lib]
+name = "version"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "preview-check"
+path = "src/bin/check.rs"
+
+[[bin]]
+name = "MJLocalPreview"
+path = "src/bin/launcher.rs"
+required-features = ["launcher"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+

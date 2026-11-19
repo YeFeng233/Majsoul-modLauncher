@@ -1,0 +1,11 @@
+/target/
+/package/
+/*.zip
+/Majsoul-modLauncher.exe
+/MJLocalPreview.exe
+/MaJmods.dll
+/MaJmods.ini
+/MJLocalPreview.dll
+/MJLocalPreview.ini
+/MaJmods/
+/MJLocalPreview/

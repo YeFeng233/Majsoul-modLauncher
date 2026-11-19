@@ -1,0 +1,16 @@
+/dist/
+/LocalPreview.zip
+/LocalPreview/target/
+/LocalPreview/package/
+/LocalPreview/*.zip
+/LocalPreview/Majsoul-modLauncher.exe
+/LocalPreview/MJLocalPreview.exe
+/LocalPreview/MaJmods.dll
+/LocalPreview/MaJmods.ini
+/LocalPreview/MJLocalPreview.dll
+/LocalPreview/MJLocalPreview.ini
+/LocalPreview/MaJmods/
+/LocalPreview/MJLocalPreview/
+/analysis/
+**/__pycache__/
+*.log

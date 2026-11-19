@@ -1,0 +1,19 @@
+# key<TAB>qualified function<TAB>Lua inserted at the beginning of that function
+# {{1}} etc. bind to the current client's parameter names, including obfuscated names.
+network	LobbyNetMgr.SendRequest	if MJLocalTrial then local handled,cb=MJLocalTrial.request({{1}},{{2}},{{3}},{{4}});if handled then return end;{{4}}=cb end;
+characters	GameMgr:makeCharacterInfo	if MJLocalTrial then {{1}}=MJLocalTrial.character_response({{1}},{{2}},self) end;
+fetch_info	GameMgr:makeFetchInfoRes	if MJLocalTrial then {{1}}=MJLocalTrial.fetch_info({{1}}) end;
+main_selection	GameMgr.SetMainCharacterAndSkin	if MJLocalTrial then {{1}},{{2}}=MJLocalTrial.main_args({{1}},{{2}}) end;
+owned	GameUtility.item_owned	if MJLocalTrial and MJLocalTrial.owned({{1}}) then return true end;
+bag_list	UI_Bag.FindItemByCategory	if MJLocalTrial then local items=MJLocalTrial.bag_items({{1}},{{2}},{{3}});if items then return items end end;
+bag_count	UI_Bag.GetCount	if MJLocalTrial then local count=MJLocalTrial.bag_count({{1}});if count then return count end end;
+have_character	GameMgr:have_character	if MJLocalTrial and MJLocalTrial.owned({{1}}) then return true end;
+liaoshe_init	UI_LiaosheSelect:Init	if MJLocalTrial then MJLocalTrial.apply(GameMgr and GameMgr.Inst) end;
+liaoshe_refresh	UI_LiaosheSelect:RefreshData	if MJLocalTrial then MJLocalTrial.apply(GameMgr and GameMgr.Inst) end;
+skin_show	UI_LiaoSheChangeSkin:OnShow	if MJLocalTrial then MJLocalTrial.apply(GameMgr and GameMgr.Inst) end;
+skin_refresh	UI_LiaoSheChangeSkin:RefreshData	if MJLocalTrial then MJLocalTrial.apply(GameMgr and GameMgr.Inst) end;
+match	DesktopMgr:InitRoom	if MJLocalTrial then {{2}}=MJLocalTrial.players({{2}},{{3}},{{4}}) end;
+preload	Scene_MJ:_loadPlayerViews	if MJLocalTrial and not {{2}} then {{1}}=MJLocalTrial.preload_players({{1}}) end;
+room_render	UI_FriendRoom:_refreshPlayerInfo	if MJLocalTrial then self.players=MJLocalTrial.room_players(self.players) end;
+room_select	UI_ChangeDeco:OnShow	if MJLocalTrial then MJLocalTrial.apply(GameMgr and GameMgr.Inst) end;
+desktop_render	UI_DesktopInfo:RefreshSeat	if MJLocalTrial then MJLocalTrial.desktop(DesktopMgr and DesktopMgr.Inst) end;
