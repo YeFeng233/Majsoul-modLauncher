@@ -13,8 +13,13 @@ impl Mod{
  }
 }
 fn avatar_image(folder:&Path,name:&str)->Result<Option<Vec<u8>>,String>{
- let path=folder.join(format!("{name}.png"));crate::launcher::unlinked(&path)?;
- if path.exists(){decode_image(&path).map(Some)}else{Ok(None)}
+ // Launcher-written English names take priority over imported Chinese names.
+ let alias=match name{"smallhead"=>"小头像","bighead"=>"大头像",_=>return Err(format!("Unknown avatar kind: {name}"))};
+ for filename in [format!("{name}.png"),format!("{alias}.png")]{
+  let path=folder.join(filename);crate::launcher::unlinked(&path)?;
+  if path.exists(){return decode_image(&path).map(Some);}
+ }
+ Ok(None)
 }
 #[derive(Debug)]
 struct SpineTexture{layer:u32,name:String,pixels:Vec<u8>}
@@ -115,7 +120,7 @@ fn prepare(base:&Path)->Result<(),String>{
  crate::launcher::atomic_write(&base.join("custom_skin.lua"),include_bytes!("../data/custom_skin.lua"))?;Ok(())
 }
 fn reload(){match scan(ROOT.get().unwrap()){
- Ok(mods)=>{log(&format!("Loaded {} enabled mods",mods.len()));*SNAPSHOT.lock().unwrap()=Some(Arc::new(mods));COMMAND.store(1,Ordering::Release);}
+ Ok(mods)=>{log(&format!("Loaded {} enabled mods ({} small avatars, {} large avatars)",mods.len(),mods.iter().filter(|m|m.smallhead.is_some()).count(),mods.iter().filter(|m|m.bighead.is_some()).count()));*SNAPSHOT.lock().unwrap()=Some(Arc::new(mods));COMMAND.store(1,Ordering::Release);}
  Err(e)=>log(&format!("Reload rejected; current images retained: {e}")),
 }}
 pub fn initialize(base:&Path){
@@ -257,6 +262,21 @@ fn decode_image(image:&Path)->Result<Vec<u8>,String>{unsafe{
   std::fs::write(folder.join("smallhead.png"),b"broken avatar").unwrap();
   assert!(scan(&root.0).unwrap_err().contains("Unable to decode"));
   assert_eq!(entry.images().count(),4);
+ }
+ #[test]fn imported_chinese_avatars_load_and_english_names_take_priority(){
+  let root=Temp::new();let folder=root.write("福姬/契约","character_id=200038\nskin_id=403802",true);
+  for name in ["小头像.png","大头像.png"]{std::fs::write(folder.join(name),include_bytes!("../data/custom.png")).unwrap();}
+  let mods=scan(&root.0).unwrap();let entry=&mods[0];
+  assert_eq!(entry.smallhead.as_ref().unwrap(),&entry.pixels);assert_eq!(entry.bighead.as_ref().unwrap(),&entry.pixels);
+  assert!(manifest(&mods).contains("smallhead={index=2},bighead={index=3}"));
+  // An invalid selected alias aborts reload, preserving the prior snapshot.
+  std::fs::write(folder.join("小头像.png"),b"broken imported avatar").unwrap();
+  assert!(scan(&root.0).unwrap_err().contains("Unable to decode"));
+  std::fs::write(folder.join("smallhead.png"),include_bytes!("../data/custom.png")).unwrap();
+  assert_eq!(scan(&root.0).unwrap()[0].smallhead,entry.smallhead);
+  // Do not silently fall back to the alias when the English override is bad.
+  std::fs::write(folder.join("bighead.png"),b"broken override").unwrap();
+  assert!(scan(&root.0).unwrap_err().contains("Unable to decode"));
  }
  #[test]fn imports_old_skin_once_and_preserves_user_changes(){
   let root=Temp::new();let legacy=root.0.join("CustomSkins");std::fs::create_dir_all(&legacy).unwrap();std::fs::write(legacy.join("custom_skin.ini"),"character=200017\nskin=401701\nlobby_y=321").unwrap();std::fs::write(legacy.join("custom.png"),include_bytes!("../data/custom.png")).unwrap();

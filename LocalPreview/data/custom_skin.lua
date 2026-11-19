@@ -179,6 +179,18 @@ local function installHeadHooks()
 end
 function S.updateHeads()
  installHeadHooks()
+ -- Already visible cards can predate these hooks. The client caches their
+ -- paths and skips SetHeadImg on refresh, so register them without a reload.
+ local selection=UI_LiaosheSelect and UI_LiaosheSelect.Inst
+ for row,path in pairs(selection and selection.map_go_headpath or {}) do
+  pcall(function()
+   if row.activeInHierarchy then
+    local image=row.transform:Find('btn'):Find('head'):GetComponent(typeof(UnityEngine.UI.Image))
+    local target=image and headTargets[image]
+    if image and (not target or target.path~=path) then S.requestHead(image,path) end
+   end
+  end)
+ end
  for image,target in pairs(headTargets) do
   local ok=pcall(S.applyHead,image,target)
   if not ok then S.heads[image]=nil;headTargets[image]=nil end
@@ -206,6 +218,15 @@ local function candidates(preparing)
    if cell then add(cell.illust,'room');add(cell.illust_spine,'room') end
   end
  end end
+ -- Player profiles are non-singleton UIBase windows: there is no .Inst.
+ -- Include every live self profile, including nested windows from comments.
+ local uiMgr=UIMgr and UIMgr.Inst
+ local profiles=uiMgr and uiMgr.uiInstanceDict and uiMgr.uiInstanceDict[(UI_PlayerInfo and UI_PlayerInfo.className) or 'UI_PlayerInfo']
+ for _,profile in ipairs(profiles or {}) do
+  if profile.accountId==account then
+   add(profile.illustration,'profile');add(profile.illustrationSpine,'profile')
+  end
+ end
  local desktop=DesktopMgr and DesktopMgr.Inst
  local play=desktop and GameUtility and GameUtility.EMJ_Mode and desktop.mode==GameUtility.EMJ_Mode.play
  if play then

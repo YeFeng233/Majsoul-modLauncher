@@ -22,8 +22,8 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("Majsoul-modLauncher")]
 [assembly: AssemblyProduct("Majsoul-modLauncher")]
-[assembly: AssemblyVersion("0.6.7.0")]
-[assembly: AssemblyFileVersion("0.6.7.0")]
+[assembly: AssemblyVersion("0.6.9.0")]
+[assembly: AssemblyFileVersion("0.6.9.0")]
 
 namespace MJLocal {
  internal sealed class Character {
@@ -981,7 +981,7 @@ namespace MJLocal {
    string report=args.Length==2&&args[0]=="--self-test"?args[1]:null;
    string snapshots=args.Length==2&&args[0]=="--export-snapshots"?args[1]:null;
    try{
-    if(args.Length==1&&(args[0]=="--help"||args[0]=="-h")){Console.WriteLine("Majsoul-modLauncher 0.6.7\n双击打开角色卡片式启动器（支持浅色/深色两种主题方案）。\n--pick / --choose-game 重新选择游戏并启动\n--game <EXE路径> 指定游戏并启动\n--close-after <秒> 自动关闭倒计时；0 保留窗口\n--theme <light|dark> 切换浅色或深色主题\nF10 重载；F11 恢复原图。");return 0;}
+    if(args.Length==1&&(args[0]=="--help"||args[0]=="-h")){Console.WriteLine("Majsoul-modLauncher 0.6.9\n双击打开角色卡片式启动器（支持浅色/深色两种主题方案）。\n--pick / --choose-game 重新选择游戏并启动\n--game <EXE路径> 指定游戏并启动\n--close-after <秒> 自动关闭倒计时；0 保留窗口\n--theme <light|dark> 切换浅色或深色主题\nF10 重载；F11 恢复原图。");return 0;}
     var root=System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
     if(report!=null){var app=new Application();var shell=new Shell(root);File.WriteAllText(report,shell.SelfTest(),Encoding.UTF8);shell.Window.Close();app.Shutdown();return 0;}
     if(snapshots!=null){var app=new Application();var shell=new Shell(root);shell.ExportSnapshots(snapshots);shell.Window.Close();app.Shutdown();return 0;}

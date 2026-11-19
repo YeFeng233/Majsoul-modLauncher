@@ -1,6 +1,6 @@
 -- Test ownership and scene lifecycle using the actual shipping portrait script.
-local saved={UnityEngine=UnityEngine,GameMgr=GameMgr,ExcelMgr=ExcelMgr,GameUtility=GameUtility,DesktopMgr=DesktopMgr,
- Tools=Tools,SkinTool=SkinTool,UI_Lobby=UI_Lobby,UI_LiaosheMain=UI_LiaosheMain,UI_LiaoSheChangeSkin=UI_LiaoSheChangeSkin,UI_FriendRoom=UI_FriendRoom,UI_DesktopInfo=UI_DesktopInfo,UI_GameEnd=UI_GameEnd,UI_Character_Skin=UI_Character_Skin,MJCustomPortrait=MJCustomPortrait,ImageMgr=ImageMgr,MJCustomHeadTargets=MJCustomHeadTargets}
+local saved={UnityEngine=UnityEngine,GameMgr=GameMgr,ExcelMgr=ExcelMgr,GameUtility=GameUtility,DesktopMgr=DesktopMgr,UIMgr=UIMgr,UI_PlayerInfo=UI_PlayerInfo,
+ Tools=Tools,SkinTool=SkinTool,UI_Lobby=UI_Lobby,UI_LiaosheMain=UI_LiaosheMain,UI_LiaoSheChangeSkin=UI_LiaoSheChangeSkin,UI_FriendRoom=UI_FriendRoom,UI_DesktopInfo=UI_DesktopInfo,UI_GameEnd=UI_GameEnd,UI_LiaosheSelect=UI_LiaosheSelect,UI_Character_Skin=UI_Character_Skin,MJCustomPortrait=MJCustomPortrait,ImageMgr=ImageMgr,MJCustomHeadTargets=MJCustomHeadTargets}
 local oldpixels=_MJCustomPixels
 local objects={}
 local function object()
@@ -21,7 +21,7 @@ local function go()
  objects[#objects+1]=o;return o
 end
 local gameObject=setmetatable({Destroy=function(o)o.destroyed=true end},{__call=function()return go()end})
-UnityEngine={GameObject=gameObject,UI={RawImage={}},Vector2=vec,Vector3=vec,Rect=function(x,y,w,h)return{x=x,y=y,width=w,height=h}end,Sprite={Create=function(texture,rect,pivot)return{texture=texture,rect=rect,pivot=pivot}end},TextureFormat={RGBA32=4},Texture2D=function()
+UnityEngine={GameObject=gameObject,UI={RawImage={},Image={}},Vector2=vec,Vector3=vec,Rect=function(x,y,w,h)return{x=x,y=y,width=w,height=h}end,Sprite={Create=function(texture,rect,pivot)return{texture=texture,rect=rect,pivot=pivot}end},TextureFormat={RGBA32=4},Texture2D=function()
  return{LoadRawTextureData=function(self,data)self.pixels=data end,Apply=function()end}
 end}
 local oldtypeof=typeof;typeof=function(t)return t end
@@ -236,6 +236,54 @@ end})
 exactLobby.pending(true);assert(updateCalls==0,'canceled load applied a replacement')
 MJCustomPortrait.update=update
 MJCustomPortrait.close()
+-- Profiles are pooled non-singleton windows registered by UIMgr, including
+-- nested windows. Select by the window's account, never a stale skin account.
+local profileStatic,profileSpine,profileOther,profileHidden=skin(nil),skin(nil),skin(10),skin(10)
+profileSpine.targetShowSpine=true
+profileHidden.image.transform.parent.gameObject.activeInHierarchy=false
+local selfProfile={accountId=10,illustration=profileStatic,illustrationSpine=profileSpine}
+local foreignProfile={accountId=20,illustration=profileOther}
+local hiddenProfile={accountId=10,illustration=profileHidden}
+UI_PlayerInfo={className='UI_PlayerInfo'}
+local profiles={selfProfile,foreignProfile,hiddenProfile}
+UIMgr={Inst={uiInstanceDict={UI_PlayerInfo=profiles}}}
+reload()
+local profileRecord=MJCustomPortrait.records[profileStatic]
+assert(profileRecord and profileRecord.kind=='profile','personal profile static portrait missing without a singleton')
+assert(MJCustomPortrait.records[profileSpine].dynamic,'personal profile animated portrait missing')
+assert(not MJCustomPortrait.records[profileOther] and not MJCustomPortrait.records[profileHidden],'foreign or hidden profile portrait was replaced')
+assert(profileRecord.raw.rectTransform.parent==profileStatic.image.rectTransform.parent,'profile mask parent was changed')
+local profileAtlas={name='profile_atlas',width=1,height=1}
+local profileGraphic={mainTexture=profileAtlas,SetMaterialDirty=function()end}
+profileSpine.spine_list={{spine_graphic=profileGraphic}}
+profileRecord.mod.spine={{layer=1,name='profile_atlas',width=1,height=1,texture={profile=true}}}
+MJCustomPortrait.update()
+assert(profileGraphic.OverrideTexture==profileRecord.mod.spine[1].texture,'profile animation did not receive the mod atlas')
+local profileCompleted=false
+UI_Character_Skin.SetSkin(profileStatic,{skinId=401701,accountId=10,complete=function()
+ assert(MJCustomPortrait.records[profileStatic] and not profileStatic.image.gameObject.activeSelf,'profile completion exposed the original portrait')
+ profileCompleted=true
+end})
+profileStatic.pending();assert(profileCompleted,'profile load completion was lost')
+selfProfile.accountId=20;MJCustomPortrait.update()
+assert(not MJCustomPortrait.records[profileStatic] and profileStatic.image.gameObject.activeSelf and profileGraphic.OverrideTexture==nil,'reusing a self profile for another account retained mod art')
+selfProfile.accountId=10;MJCustomPortrait.update()
+local oldProfileRecord=MJCustomPortrait.records[profileStatic]
+reload()
+assert(oldProfileRecord.go.destroyed and MJCustomPortrait.records[profileStatic].mod.texture~=oldProfileRecord.mod.texture,'profile F10 retained the previous collection')
+profileStatic.image.transform.parent.gameObject.activeInHierarchy=false
+MJCustomPortrait.update();assert(not MJCustomPortrait.records[profileStatic],'closed profile retained its overlay')
+profileStatic.image.transform.parent.gameObject.activeInHierarchy=true
+MJCustomPortrait.update();assert(MJCustomPortrait.records[profileStatic],'reopened profile did not regain its mod')
+local nested=skin(10);profiles[4]={accountId=10,illustration=nested}
+MJCustomPortrait.update();assert(MJCustomPortrait.records[nested],'nested self profile was missed')
+UI_Character_Skin.Clear(nested)
+assert(not MJCustomPortrait.records[nested] and nested.image.gameObject.activeSelf,'profile reset retained an overlay')
+reload(empty)
+assert(profileStatic.image.gameObject.activeSelf and next(MJCustomPortrait.records)==nil,'disabling mods did not restore the profile')
+reload();MJCustomPortrait.close()
+assert(profileStatic.image.gameObject.activeSelf and profileGraphic.OverrideTexture==nil,'profile F11 did not restore original art')
+UIMgr=nil;UI_PlayerInfo=nil
 -- Avatar sprites share the collection transaction and follow asynchronous
 -- native image completion without changing other UI image requests.
 MJCustomHeadTargets=nil
@@ -250,8 +298,28 @@ Tools={SetHeadImg=function(image,id,kind)
  ImageMgr.SetTextureAsync(image,SkinTool.GetSkinIconDir(id)..'/'..kind..'/'..kind,nil,function(...)image.callbackSprite=image.sprite;image.callbackArgs=select('#',...)end)
  return 'head',nil,9
 end}
+local cachedNative={cached=true}
+local cachedImage={sprite=cachedNative}
+local hiddenImage={sprite={hidden=true}}
+local function card(image,active)
+ local head={GetComponent=function(_,kind)assert(kind==UnityEngine.UI.Image);return image end}
+ local button={Find=function(_,name)assert(name=='head');return head end}
+ return{activeInHierarchy=active,transform={Find=function(_,name)assert(name=='btn');return button end}}
+end
+local cachedRow=card(cachedImage,true)
+local hiddenRow=card(hiddenImage,false)
+local cachedPaths={[cachedRow]='legacy/test/bighead/bighead',[hiddenRow]='legacy/test/bighead/bighead',[{}]='legacy/test/bighead/bighead'}
+UI_LiaosheSelect={Inst={map_go_headpath=cachedPaths}}
 local avatarSource=MJCustomPortraitSource:gsub('local mods=.-\nlocal loaded','local mods={{character=200017,skin=401701,index=1,options={},smallhead={index=2},bighead={index=3}}}\nlocal loaded',1)
 reload(avatarSource)
+assert(cachedImage.sprite==MJCustomPortrait.mods[1].bighead.sprite,'preloaded character card stayed outside avatar hooks')
+assert(not MJCustomHeadTargets[hiddenImage],'hidden character card was registered')
+cachedPaths[cachedRow]='deco/character/401801/bighead/bighead'
+MJCustomPortrait.updateHeads()
+assert(cachedImage.sprite==cachedNative,'recycled cached card retained the previous character avatar')
+cachedPaths[cachedRow]='legacy/test/bighead/bighead'
+MJCustomPortrait.updateHeads()
+assert(cachedImage.sprite==MJCustomPortrait.mods[1].bighead.sprite,'cached card path update was ignored')
 local small={sprite={base=true}}
 local x,y,z=Tools.SetHeadImg(small,401701,'smallhead')
 local smallEntry=MJCustomPortrait.mods[1].smallhead
@@ -269,8 +337,9 @@ assert(observed==MJCustomPortrait.mods[1].bighead.sprite and large.sprite~=small
 local firstSmall=small.sprite
 reload(avatarSource)
 assert(firstSmall.destroyed and small.sprite==MJCustomPortrait.mods[1].smallhead.sprite,'F10 retained a released avatar sprite')
+assert(cachedImage.sprite==MJCustomPortrait.mods[1].bighead.sprite,'F10 did not refresh the preloaded card')
 MJCustomPortrait.close()
-assert(small.sprite==nativeSmall and large.sprite==nativeLarge,'F11 did not restore latest async native sprites')
+assert(small.sprite==nativeSmall and large.sprite==nativeLarge and cachedImage.sprite==cachedNative,'F11 did not restore latest async native sprites')
 reload(avatarSource)
 ImageMgr.SetTextureAsync(small,'ui/other/icon',nil,nil)
 assert(small.sprite==nativeSmall and not MJCustomHeadTargets[small],'recycled non-avatar image retained replacement')
@@ -285,4 +354,4 @@ _MJCustomPixels=nativePixels
 MJCustomPortrait.close()
 _MJCustomPixels=oldpixels;typeof=oldtypeof
 for k,v in pairs(saved)do _G[k]=v end
-for _,k in ipairs({'Tools','SkinTool','UI_DesktopInfo','UI_FriendRoom','UI_LiaosheMain','UI_LiaoSheChangeSkin','UI_GameEnd','DesktopMgr','MJCustomPortrait','UI_Character_Skin','ImageMgr','MJCustomHeadTargets'})do if saved[k]==nil then _G[k]=nil end end
+for _,k in ipairs({'UIMgr','UI_PlayerInfo','Tools','SkinTool','UI_DesktopInfo','UI_FriendRoom','UI_LiaosheMain','UI_LiaosheSelect','UI_LiaoSheChangeSkin','UI_GameEnd','DesktopMgr','MJCustomPortrait','UI_Character_Skin','ImageMgr','MJCustomHeadTargets'})do if saved[k]==nil then _G[k]=nil end end
