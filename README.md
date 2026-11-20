@@ -16,4 +16,4 @@
 
 两个示例 Mod 均为二之宫花（200017）的皮肤。默认皮肤 401701 和纯白午后 401710 分别存放在 `MaJmods/mods/二之宫花/默认替换/` 和 `MaJmods/mods/二之宫花/纯白午后/`。原图尺寸、位置、缩放与裁切对齐继续使用。
 
-`LocalPreview/gui` 为图形界面与内置头像资料，`src`、`data`、`tests` 为原生代码、默认数据及验证；`build.ps1` 编译图形启动器和 DLL，`verify.ps1` 进行原生功能验证。`tools` 保留客户端分析工具。[开发说明](LocalPreview/README.md)。
+`LocalPreview/gui` 为图形界面与内置头像资料，`src`、`data`、`tests` 为原生代码、默认数据及验证；`build.ps1` 编译图形启动器和 DLL，`verify.ps1` 进行原生功能验证。`tools` 保留客户端分析工具。[开发说明](LocalPreview/README.md)。完整的架构、启动与 Lua 接管链路、Mod 渲染、热重载和验证机制见 [工程实现说明](工程实现说明.md)。
