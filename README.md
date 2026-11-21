@@ -1,6 +1,8 @@
 # Majsoul-modLauncher
 
-当前启动器版本为 **0.6.9**，内置 129 位角色头像及 526 款皮肤资料，包含泠星与《葬送的芙莉莲》联动角色。
+当前启动器版本为 **0.6.10**，内置 129 位角色头像及 526 款皮肤资料，包含泠星与《葬送的芙莉莲》联动角色。
+
+0.6.10 修复角色星标收藏在客户端重启后丢失，收藏、普通角色排序及隐藏列表按账号保存，支持重启、重连和取消收藏。同时包含辉夜姬「择芳意」静态立绘回退与纹理上传内存回收修复。升级需同时覆盖包内 EXE、DLL 和 `MaJmods/runtime.lua`，再通过启动器重新启动游戏。此前已经丢失的星标需重新设置并保存。
 
 0.6.9 补齐本人个人名片的立绘替换，支持静态立绘、动态图集、多实例窗口以及 F10/F11 更新与恢复。保留名片原有遮罩和布局。
 
@@ -8,7 +10,7 @@
 
 0.6.7 修复 Steam 版启动后重新拉起游戏、丢失本地预览的问题。根据 Steam 安装记录设置游戏子进程的应用环境，启动时确认游戏进程持续运行，再显示成功。使用 Steam 版时请先登录 Steam。
 
-从 [GitHub Releases](https://github.com/YeFeng233/Majsoul-modLauncher/releases) 下载 Windows x86 压缩包，完整解压后运行 `Majsoul-modLauncher.exe`。`MaJmods.dll` 和 `MaJmods` 数据目录需与 EXE 放在同一目录。升级时，把新版 EXE 和 DLL 放入原安装目录。若新位置尚未存在，首次运行会把旧数据目录和游戏路径配置分别迁移至 `MaJmods` 和 `MaJmods.ini`。更新物品目录时，将 [ID 清单](LocalPreview/data/max_data.yaml)放入 `MaJmods` 子目录。[使用说明](LocalPreview/README.txt)。
+从 [GitHub Releases](https://github.com/YeFeng233/Majsoul-modLauncher/releases) 下载 Windows x86 压缩包，完整解压后运行 `Majsoul-modLauncher.exe`。`MaJmods.dll` 和 `MaJmods` 数据目录需与 EXE 放在同一目录。升级时，把新版 EXE、DLL 和发行包附带的 `MaJmods/runtime.lua` 放入原安装目录并覆盖同名文件；保留已有 Mod、配置及其他运行数据。若新位置尚未存在，首次运行会把旧数据目录和游戏路径配置分别迁移至 `MaJmods` 和 `MaJmods.ini`。更新物品目录时，将 [ID 清单](LocalPreview/data/max_data.yaml)放入 `MaJmods` 子目录。[使用说明](LocalPreview/README.txt)。
 
 制作或调整自定义立绘请参阅 [Mod 适配指南](MOD适配指南.md)，包含目录结构、角色与皮肤 ID、两个示例，以及图片尺寸和各场景显示比例的调整方法。
 

@@ -5,6 +5,7 @@ local function destroy(obj) if obj then pcall(U.GameObject.Destroy,obj) end end
 local mods=@MODS@
 local loaded,err=pcall(function()
  local function loadTexture(entry)
+  collectgarbage('collect')
   local data=_MJCustomPixels(entry.index)
   assert(type(data)=='string','Missing image data')
   local function int(at) local a,b,c,d=data:byte(at,at+3);assert(d,'Truncated texture header');return a+b*256+c*65536+d*16777216 end
@@ -13,9 +14,12 @@ local loaded,err=pcall(function()
   entry.width=w;entry.height=h
   entry.texture=U.Texture2D(w,h,U.TextureFormat.RGBA32,false)
   entry.texture:LoadRawTextureData(data:sub(9));entry.texture:Apply(false,false)
+  data=nil;collectgarbage('collect')
  end
  for _,mod in ipairs(mods) do
   loadTexture(mod)
+  -- Native scanning omits static-only pages; also tolerate older manifests.
+  if mod.static_only then mod.spine={} end
   for _,page in ipairs(mod.spine or {}) do loadTexture(page) end
    for _,kind in ipairs({'smallhead','bighead'}) do
     local entry=mod[kind]
@@ -363,13 +367,13 @@ function S.update(preparing)
  local wanted=candidates(preparing)
  for skin,record in pairs(S.records) do
   local valid=false
-  pcall(function()valid=wanted[skin]~=nil and record.mod==wanted[skin].mod and record.kind==wanted[skin].kind and record.dynamic==(skin.targetShowSpine==true) and record.version==skin.targetVersion end)
+  pcall(function()valid=wanted[skin]~=nil and record.mod==wanted[skin].mod and record.kind==wanted[skin].kind and record.dynamic==(skin.targetShowSpine==true and not wanted[skin].mod.static_only) and record.version==skin.targetVersion end)
   if not valid then restore(record);S.records[skin]=nil end
  end
  for skin,target in pairs(wanted) do
   local record=S.records[skin]
   if not record then
-   if skin.targetShowSpine then
+   if skin.targetShowSpine and not target.mod.static_only then
     record={owner=skin,version=skin.targetVersion,kind=target.kind,mod=target.mod,dynamic=true,graphics={}}
    else
     record=create(skin,target.kind,target.mod);record.dynamic=false

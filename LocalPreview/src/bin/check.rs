@@ -78,11 +78,17 @@ fn main(){
             lua.check("@actual-client-functions",&out.source,true).unwrap();
         }
         lua.check("@assertions",&read(&tests.join("assertions.lua")),true).unwrap();
+        lua.check("@favorites",&read(&tests.join("favorites.lua")),true).unwrap();
         lua.check("@restart-reset","MJLocalTrial=nil",true).unwrap();
         lua.check("@restart-runtime",&prelude,true).unwrap();
         lua.check("@restart-environment",&read(&tests.join("environment.lua")),true).unwrap();
         lua.check("@restart-assert","MJLocalTrial.guard_ready=true;MJLocalTrial.account(GameMgr.Inst);assert(MJLocalTrial.choices.character_id==200002 and MJLocalTrial.skins[200002]==400202,'saved profile lost across runtime restart')",true).unwrap();
-        println!("Functional assertions passed (actual client function bodies + runtime)");
+        if !definitions.is_empty(){
+            let out=transform::rewrite(&definitions,&rules,&prelude).unwrap();
+            lua.check("@restart-client-functions",&out.source,true).unwrap();
+        }
+        lua.check("@favorites-restart",&read(&tests.join("favorites_restart.lua")),true).unwrap();
+        println!("Functional assertions passed (actual client function bodies + runtime, favorites persistence and restart)");
         let custom=tests.join("custom_assertions.lua");
         if custom.is_file() {
             let script=read(&data.join("custom_skin.lua")).replace("@MODS@","{{character=200017,skin=0,index=1,options={}}, {character=200017,skin=401701,index=2,options={}}, {character=200018,skin=0,index=3,options={}}}");

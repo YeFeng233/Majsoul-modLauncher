@@ -6,7 +6,7 @@ static COMMAND:AtomicU32=AtomicU32::new(0);
 static LAST:AtomicU32=AtomicU32::new(0);
 thread_local!{static BUSY:Cell<bool>=const{Cell::new(false)};static ACTIVE:RefCell<Option<Arc<Vec<Mod>>>>=const{RefCell::new(None)};}
 #[derive(Debug)]
-struct Mod{character:u32,skin:u32,options:BTreeMap<String,f64>,pixels:Vec<u8>,spine:Vec<SpineTexture>,smallhead:Option<Vec<u8>>,bighead:Option<Vec<u8>>}
+struct Mod{character:u32,skin:u32,static_only:bool,options:BTreeMap<String,f64>,pixels:Vec<u8>,spine:Vec<SpineTexture>,smallhead:Option<Vec<u8>>,bighead:Option<Vec<u8>>}
 impl Mod{
  fn images(&self)->impl Iterator<Item=&Vec<u8>>{
   std::iter::once(&self.pixels).chain(self.spine.iter().map(|t|&t.pixels)).chain(self.smallhead.iter()).chain(self.bighead.iter())
@@ -78,6 +78,12 @@ fn scan(root:&Path)->Result<Vec<Mod>,String>{
    if enabled>1{return Err("enabled must be 0 or 1".into());}if enabled==0{return Ok(None);}
    let character=integer(&values,"character_id","character",None)?;if character==0{return Err("character_id must be positive".into());}
    let skin=integer(&values,"skin_id","skin",Some(0))?;
+    // Imported atlas compatibility for 402904 is unverified; prefer the full portrait.
+    // Keep this default in the engine so upgrades also cover existing mod.ini files.
+    let static_only=match values.get("render_mode").map(String::as_str).unwrap_or("auto"){
+     "auto"=>skin==402904,"static"=>true,"spine"=>false,
+     _=>return Err("render_mode must be auto, static or spine".into()),
+    };
    if !keys.insert((character,skin)){return Err(format!("Duplicate enabled mod for character {character}, skin {skin}"));}
    let image=PathBuf::from(values.get("image").map(String::as_str).unwrap_or("custom.png"));
    if image.is_absolute()||image.components().any(|c|!matches!(c,std::path::Component::Normal(_)|std::path::Component::CurDir)){return Err("image must be a relative path inside this mod".into());}
@@ -85,17 +91,17 @@ fn scan(root:&Path)->Result<Vec<Mod>,String>{
    if !path.extension().is_some_and(|v|v.eq_ignore_ascii_case("png")){return Err("image must be PNG".into());}
    let mut options=BTreeMap::new();
    for (key,value) in &values{
-    if matches!(key.as_str(),"enabled"|"character_id"|"character"|"skin_id"|"skin"|"image"){continue;}
+    if matches!(key.as_str(),"enabled"|"character_id"|"character"|"skin_id"|"skin"|"image"|"render_mode"){continue;}
     let valid=["lobby","room","match","ending","dorm","dorm_preview"].iter().any(|scene|["x","y","height"].iter().any(|axis|*key==format!("{scene}_{axis}")));
     if !valid{return Err(format!("Unknown mod setting: {key}"));}
     let number=value.parse::<f64>().map_err(|_|format!("Invalid layout value: {key}"))?;
     if !number.is_finite()||number.abs()>100000.0||(key.ends_with("_height")&&number<=0.0){return Err(format!("Invalid layout value: {key}"));}
     options.insert(key.clone(),number);
    }
-   let pixels=decode_image(&path)?;let spine=spine_textures(&folder)?;
+   let pixels=decode_image(&path)?;let spine=if static_only{Vec::new()}else{spine_textures(&folder)?};
    let smallhead=avatar_image(&folder,"smallhead")?;
    let bighead=avatar_image(&folder,"bighead")?;
-   let entry=Mod{character,skin,options,pixels,spine,smallhead,bighead};
+   let entry=Mod{character,skin,static_only,options,pixels,spine,smallhead,bighead};
    total+=entry.images().map(Vec::len).sum::<usize>();
    if total>1024*1024*1024{return Err("Total decoded mod images exceed 1024 MiB".into());}
    Ok(Some(entry))
@@ -120,7 +126,7 @@ fn prepare(base:&Path)->Result<(),String>{
  crate::launcher::atomic_write(&base.join("custom_skin.lua"),include_bytes!("../data/custom_skin.lua"))?;Ok(())
 }
 fn reload(){match scan(ROOT.get().unwrap()){
- Ok(mods)=>{log(&format!("Loaded {} enabled mods ({} small avatars, {} large avatars)",mods.len(),mods.iter().filter(|m|m.smallhead.is_some()).count(),mods.iter().filter(|m|m.bighead.is_some()).count()));*SNAPSHOT.lock().unwrap()=Some(Arc::new(mods));COMMAND.store(1,Ordering::Release);}
+ Ok(mods)=>{log(&format!("Loaded {} enabled mods ({} small avatars, {} large avatars)",mods.len(),mods.iter().filter(|m|m.smallhead.is_some()).count(),mods.iter().filter(|m|m.bighead.is_some()).count()));log(&format!("Decoded mod images: {:.2} MiB; static-only mods: {}; Spine pages: {}",mods.iter().flat_map(Mod::images).map(Vec::len).sum::<usize>() as f64/1048576.0,mods.iter().filter(|m|m.static_only).count(),mods.iter().map(|m|m.spine.len()).sum::<usize>()));*SNAPSHOT.lock().unwrap()=Some(Arc::new(mods));COMMAND.store(1,Ordering::Release);}
  Err(e)=>log(&format!("Reload rejected; current images retained: {e}")),
 }}
 pub fn initialize(base:&Path){
@@ -139,7 +145,7 @@ fn base_path(name:&str)->PathBuf{ROOT.get().unwrap().join(name)}
 fn manifest(mods:&[Mod])->String{
  let mut out=String::from("{");let mut index=1;
  for m in mods{
-  out.push_str(&format!("{{character={},skin={},index={},options={{",m.character,m.skin,index));index+=1;
+  out.push_str(&format!("{{character={},skin={},index={},static_only={},options={{",m.character,m.skin,index,m.static_only));index+=1;
   for(k,v)in &m.options{out.push_str(&format!("{k}={v},"));}
   out.push_str("},spine={");
   for t in &m.spine{out.push_str(&format!("{{layer={},name='{}',index={}}},",t.layer,t.name,index));index+=1;}
@@ -249,7 +255,26 @@ fn decode_image(image:&Path)->Result<Vec<u8>,String>{unsafe{
   std::fs::write(layer.join("second.png"),include_bytes!("../data/custom.png")).unwrap();
   assert!(scan(&root.0).unwrap_err().contains("Only one atlas page"));
  }
- #[test]fn optional_avatar_images_share_manifest_pixel_order(){
+ #[test]fn static_mode_skips_atlas_decode_and_preserves_avatar_indices(){
+   let root=Temp::new();let folder=root.write("辉夜姬/择芳意","character_id=200029\nskin_id=402904",true);
+   let layer=folder.join("spine/layer2");std::fs::create_dir_all(&layer).unwrap();
+   std::fs::write(layer.join("huiyeji_cj.png"),b"intentionally corrupt atlas").unwrap();
+   for name in ["小头像.png","大头像.png"]{std::fs::write(folder.join(name),include_bytes!("../data/custom.png")).unwrap();}
+   let mods=scan(&root.0).unwrap();assert!(mods[0].static_only&&mods[0].spine.is_empty());
+   assert_eq!(mods[0].images().count(),3);
+   let text=manifest(&mods);assert!(text.contains("static_only=true")&&text.contains("smallhead={index=2},bighead={index=3}"));
+   // Explicit Spine opt-in still validates the atlas rather than silently ignoring it.
+   std::fs::write(folder.join("mod.ini"),"character_id=200029\nskin_id=402904\nrender_mode=spine").unwrap();
+   assert!(scan(&root.0).unwrap_err().contains("Unable to decode"));
+   // Any mod can request the same static path; other auto-mode skins stay dynamic.
+   std::fs::write(folder.join("mod.ini"),"character_id=200029\nskin_id=402905\nrender_mode=static").unwrap();
+   assert!(scan(&root.0).unwrap()[0].static_only);
+   std::fs::write(folder.join("mod.ini"),"character_id=200029\nskin_id=402905\nrender_mode=auto").unwrap();
+   assert!(scan(&root.0).unwrap_err().contains("Unable to decode"));
+   std::fs::write(folder.join("mod.ini"),"character_id=200029\nrender_mode=invalid").unwrap();
+   assert!(scan(&root.0).unwrap_err().contains("render_mode must be"));
+  }
+  #[test]fn optional_avatar_images_share_manifest_pixel_order(){
   let root=Temp::new();let folder=root.write("角色/头像","character_id=200017\nskin_id=401701",true);
   let initial=scan(&root.0).unwrap();assert!(initial[0].smallhead.is_none()&&initial[0].bighead.is_none());
   for name in ["smallhead.png","bighead.png"]{std::fs::write(folder.join(name),include_bytes!("../data/custom.png")).unwrap();}

@@ -352,6 +352,33 @@ local invalidAvatar=avatarSource:gsub('smallhead={index=2}','smallhead={index=99
 assert(not pcall(reload,invalidAvatar) and MJCustomPortrait==previous and previous.enabled,'bad avatar discarded the previous collection')
 _MJCustomPixels=nativePixels
 MJCustomPortrait.close()
+-- A static-only manifest must never fetch its incompatible atlas, even when
+-- the client still identifies the skin as animated. Preserve layout and heads.
+local staticSkin=skin(10);staticSkin.targetShowSpine=true
+staticSkin.originRect={anchoredPosition={x=100,y=400}}
+UI_Lobby={Inst={container_illust={character_skin=staticSkin}}}
+Tools={GetSkinData=function()return{width=600,height=1500,delta_x=-10,delta_y=25}end}
+SkinTool=nil
+local fetch=_MJCustomPixels
+_MJCustomPixels=function(index)assert(index~=99,'static-only atlas was fetched');return fetch(index)end
+local staticSource=MJCustomPortraitSource:gsub('local mods=.-\nlocal loaded','local mods={{character=200017,skin=401701,index=1,static_only=true,options={},spine={{index=99}},smallhead={index=2},bighead={index=3}}}\nlocal loaded',1)
+reload(staticSource)
+local staticRecord=MJCustomPortrait.records[staticSkin]
+assert(staticRecord and not staticRecord.dynamic and staticRecord.go.activeSelf,'animated skin did not use static fallback')
+assert(not staticSkin.spine_root.activeSelf and not staticSkin.image.gameObject.activeSelf,'static fallback exposed original graphics')
+assert(staticRecord.raw.rectTransform.sizeDelta.y==1500 and staticRecord.raw.rectTransform.anchoredPosition.y==375,'animated geometry was lost in static mode')
+assert(MJCustomPortrait.mods[1].smallhead.sprite and MJCustomPortrait.mods[1].bighead.sprite,'static fallback lost avatar sprites')
+MJCustomPortrait.update();assert(MJCustomPortrait.records[staticSkin]==staticRecord,'static fallback recreated its overlay every tick')
+reload(staticSource);assert(staticRecord.go.destroyed and MJCustomPortrait.records[staticSkin],'static F10 did not replace the overlay')
+MJCustomPortrait.close();assert(staticSkin.spine_root.activeSelf and staticSkin.image.gameObject.activeSelf,'static F11 failed to restore originals')
+reload(staticSource)
+UI_Character_Skin.SetSkin(staticSkin,{skinId=401701,accountId=10,dynamic=true,complete=function()
+ local record=MJCustomPortrait.records[staticSkin]
+ assert(record and not record.dynamic and not staticSkin.spine_root.activeSelf,'static fallback missed dynamic completion')
+end});staticSkin.pending()
+UI_Character_Skin.SetActive(staticSkin,false);assert(not MJCustomPortrait.records[staticSkin],'hidden static fallback retained overlay')
+UI_Character_Skin.SetActive(staticSkin,true);assert(MJCustomPortrait.records[staticSkin],'static fallback did not return on activation')
+MJCustomPortrait.close()
 _MJCustomPixels=oldpixels;typeof=oldtypeof
 for k,v in pairs(saved)do _G[k]=v end
 for _,k in ipairs({'UIMgr','UI_PlayerInfo','Tools','SkinTool','UI_DesktopInfo','UI_FriendRoom','UI_LiaosheMain','UI_LiaosheSelect','UI_LiaoSheChangeSkin','UI_GameEnd','DesktopMgr','MJCustomPortrait','UI_Character_Skin','ImageMgr','MJCustomHeadTargets'})do if saved[k]==nil then _G[k]=nil end end

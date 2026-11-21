@@ -360,7 +360,7 @@
       </Border>
       <TextBlock Text="Majsoul-modLauncher" Foreground="{DynamicResource InkSecondary}" FontWeight="Bold" FontSize="11.5" Margin="10,0,0,0" VerticalAlignment="Center"/>
       <Border CornerRadius="6" Background="{DynamicResource CardSubtleBg}" Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Center">
-       <TextBlock Text="v0.6.7" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Muted}"/>
+       <TextBlock Text="v0.6.10" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Muted}"/>
       </Border>
      </StackPanel>
 

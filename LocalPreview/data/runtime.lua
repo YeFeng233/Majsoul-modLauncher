@@ -89,6 +89,52 @@ if not MJLocalTrial then
     local ok = pcall(function() prefs.SetString(key, text); prefs.Save() end)
     if not ok then M.log('local appearance save failed') end
   end
+  local function sort_key()
+    if profile_key(M.account_id) then
+      return 'MJLocalPreview.' .. 'characterSort.v1.' .. string.format('%.0f', M.account_id)
+    end
+  end
+  local function character_ids(ids, seen)
+    local out = {}
+    seen = seen or {}
+    for _, id in ipairs(ids or {}) do
+      if type(id) == 'number' and id > 0 and id == math.floor(id) and
+        config('character', id) and not seen[id] then
+        seen[id] = true; out[#out + 1] = id
+      end
+    end
+    return out
+  end
+  function M.restore_sort()
+    local key, prefs = sort_key(), UnityEngine and UnityEngine.PlayerPrefs
+    if not key or not prefs then return end
+    local ok, text = pcall(prefs.GetString, key, '')
+    if not ok or type(text) ~= 'string' or #text > 32768 then return end
+    local favorites, others, hidden = text:match('^1;([%d,]*);([%d,]*);([%d,]*)$')
+    if not favorites then return end
+    local function parse(value)
+      local ids = {}
+      for id in value:gmatch('%d+') do ids[#ids + 1] = tonumber(id) end
+      return ids
+    end
+    local seen = {}
+    M.character_sort = character_ids(parse(favorites), seen)
+    M.other_character_sort = character_ids(parse(others), seen)
+    M.hidden_characters = character_ids(parse(hidden))
+  end
+  function M.save_sort(data)
+    -- Empty lists are intentional: removing the final star must survive a restart.
+    local seen = {}
+    M.character_sort = character_ids(data.sort, seen)
+    M.other_character_sort = character_ids(data.other_sort, seen)
+    M.hidden_characters = character_ids(data.hidden_characters)
+    local key, prefs = sort_key(), UnityEngine and UnityEngine.PlayerPrefs
+    if not key or not prefs then return end
+    local text = '1;' .. table.concat(M.character_sort, ',') .. ';' ..
+      table.concat(M.other_character_sort, ',') .. ';' .. table.concat(M.hidden_characters, ',')
+    local ok = pcall(function() prefs.SetString(key, text); prefs.Save() end)
+    if not ok then M.log('local character sort save failed') end
+  end
   function M.account(mgr)
     if not mgr then return end
     local id = mgr.account_id
@@ -98,7 +144,9 @@ if not MJLocalTrial then
       M.match_views = nil
       M.active_group, M.last_info, M.loading_images, M.title = nil, nil, nil, nil
       M.real_characters = {}
+      M.character_sort, M.other_character_sort, M.hidden_characters = nil, nil, nil
       M.restore()
+      M.restore_sort()
     end
   end
   function M.log(stage)
@@ -159,9 +207,11 @@ if not MJLocalTrial then
     out.characters = {}
     out.skins = merge_ids(data.skins, M.catalog.skin, 'skin')
     local sort_seen = {}
-    for _, id in ipairs(data.character_sort or {}) do sort_seen[id] = true end
-    for _, id in ipairs(data.other_character_sort or {}) do sort_seen[id] = true end
-    out.other_character_sort = array(data.other_character_sort)
+    out.character_sort = array(M.character_sort or data.character_sort)
+    out.other_character_sort = array(M.other_character_sort or data.other_character_sort)
+    out.hidden_characters = array(M.hidden_characters or data.hidden_characters)
+    for _, id in ipairs(out.character_sort) do sort_seen[id] = true end
+    for _, id in ipairs(out.other_character_sort) do sort_seen[id] = true end
     M.real_characters = {}
     for _, char in ipairs(data.characters or {}) do
       local cloned = copy(char)
@@ -177,11 +227,17 @@ if not MJLocalTrial then
           charid = id, skin = M.skins[id] or c.init_skin, level = 5, exp = 0,
           is_upgraded = true, extra_emoji = {}, rewarded_level = {}, views = {},
         }
-        if not sort_seen[id] then out.other_character_sort[#out.other_character_sort + 1] = id end
+        if not sort_seen[id] then
+          out.other_character_sort[#out.other_character_sort + 1] = id; sort_seen[id] = true
+        end
       end
     end
     for _, char in ipairs(out.characters) do
       local c = config('character', char.charid)
+      if M.character_sort and not sort_seen[char.charid] then
+        out.other_character_sort[#out.other_character_sort + 1] = char.charid
+        sort_seen[char.charid] = true
+      end
       if c and c.init_skin then out.skins = merge_ids(out.skins, { c.init_skin }, 'skin') end
     end
     if M.choices.character_id and seen[M.choices.character_id] then out.main_character_id = M.choices.character_id end
@@ -311,6 +367,17 @@ if not MJLocalTrial then
       M.choose(data.character_id, skin, true)
     elseif method == 'changeCharacterSkin' then
       M.choose(data.character_id, data.skin, false)
+    elseif method == 'updateCharacterSort' then
+      M.save_sort(data)
+      if mgr and mgr.characterInfo then
+        -- Let the native callback update its visible lists; keep login/reconnect
+        -- source data consistent without touching the received server packet.
+        local info = copy(mgr.characterInfo)
+        info.character_sort = array(M.character_sort)
+        info.other_character_sort = array(M.other_character_sort)
+        info.hidden_characters = array(M.hidden_characters)
+        mgr.characterInfo, M.last_info = info, info
+      end
     elseif method == 'changeCharacterView' and data.character_id and data.slot ~= nil then
       M.character_views = M.character_views or {}
       local views = M.character_views[data.character_id] or {}
